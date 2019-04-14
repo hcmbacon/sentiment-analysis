@@ -37,10 +37,25 @@ class SentimentAnalysisTrain():
         spacymodel = spacy.load('en_core_web_md')
         pos_data = self.get_comment_embeddings(self.pos_file, spacymodel)
         neg_data = self.get_comment_embeddings(self.neg_file, spacymodel)
-
+        labelled_pos_data = np.concatenate((pos_data, np.ones((pos_data.shape[0],1))), axis=1)
+        np.random.shuffle(labelled_pos_data)
+        labelled_neg_data = np.concatenate((neg_data, np.zeros((neg_data.shape[0],1))), axis=1)
+        np.random.shuffle(labelled_neg_data)
+        pos_split_ix = int(self.get_no_lines(self.pos_file)*0.8)
+        neg_split_ix = int(self.get_no_lines(self.neg_file)*0.8)
+        labelled_train = np.concatenate((labelled_pos_data[:pos_split_ix], labelled_neg_data[:neg_split_ix]), axis=0)
+        np.random.shuffle(labelled_train)
+        labelled_test = np.concatenate((labelled_pos_data[pos_split_ix:], labelled_neg_data[neg_split_ix:]), axis=0)
+        np.random.shuffle(labelled_test)
+        Xtrain = labelled_train[:,:300]
+        ytrain = labelled_train[:,-1]
+        Xtest = labelled_test[:,:300]
+        ytest = labelled_test[:,-1]
+        print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
+        return Xtrain, ytrain, Xtest, ytest
 
 
 
 if __name__ == '__main__':
-    a = SentimentAnalysisTrain('/Users/hannahbacon/nlp-challenge/positive_reviews.txt', '/Users/hannahbacon/nlp-challenge/negative_reviews.txt')
-    a.split_data()
+    movie_review = SentimentAnalysisTrain('/Users/hannahbacon/nlp-challenge/positive_reviews.txt', '/Users/hannahbacon/nlp-challenge/negative_reviews.txt')
+    Xtrain, ytrain, Xtest, ytest = movie_review.split_data()
