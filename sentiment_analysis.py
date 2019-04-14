@@ -56,13 +56,10 @@ class SentimentAnalysisTrain():
         return train_data, test_data
 
 
-    def get_train_test_data(self, train_data, test_data):
-        Xtrain = train_data[:,:300]
-        ytrain = train_data[:,-1]
-        Xtest = test_data[:,:300]
-        ytest = test_data[:,-1]
-        # print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
-        return Xtrain, ytrain, Xtest, ytest
+    def get_data_labels(self, data):
+        Xval= data[:,:300]
+        yval = data[:,-1]
+        return Xval, yval
 
     def train(self, Xtrain, ytrain):
         model = MLPClassifier(early_stopping=True)
@@ -71,38 +68,38 @@ class SentimentAnalysisTrain():
 
 
     def evaluate(self, Xtest, ytest):
-        model = pickle.load(open('movie_review_classifier.sav', 'rb'))
-        y_pred = model.predict(Xtest)
-        print(confusion_matrix(ytest, y_pred))
-
+        if os.path.exists('movie_review_classifier.sav'):
+            model = pickle.load(open('movie_review_classifier.sav', 'rb'))
+            y_pred = model.predict(Xtest)
+            print(confusion_matrix(ytest, y_pred))
+        else:
+            print('Model does not exist. Specify "train" as argument')
 
 
 if __name__ == '__main__':
     mode = sys.argv[1].lower()
     movie_review = SentimentAnalysisTrain('positive_reviews.txt', 'negative_reviews.txt')
+
     if mode == 'train':
         if os.path.exists('train_data.csv'):
             print('Loading train data features from csv file')
             train_data = np.loadtxt('train_data.csv', delimiter=",")
-            test_data = np.loadtxt('test_data.csv', delimiter=",")
         else:
             print('Extracting train data features')
             train_data, test_data = movie_review.split_data()
-        Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data(train_data, test_data)
+        Xtrain, ytrain = movie_review.get_data_labels(train_data)
         print('Beginning training')
         movie_review.train(Xtrain,ytrain)
         print('Finished training model')
 
-
     elif mode == 'evaluate':
         if os.path.exists('test_data.csv'):
             print('Loading test data features from csv file')
-            train_data = np.loadtxt('train_data.csv', delimiter=",")
             test_data = np.loadtxt('test_data.csv', delimiter=",")
         else:
             print('Extracting test data features')
             train_data, test_data = movie_review.split_data()
-        Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data(train_data, test_data)
+        Xtest, ytest = movie_review.get_data_labels(test_data)
         print('Beginning evaluation')
         movie_review.evaluate(Xtest, ytest)
     else:
