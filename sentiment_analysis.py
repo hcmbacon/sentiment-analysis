@@ -6,24 +6,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-# nlp = spacy.load('en_core_web_md')
-#
-# with open('/Users/hannahbacon/nlp-challenge/negative_reviews.txt') as f:
-#     for line in f:
-#         tokens = nlp(unicode(line))
-#         for t in tokens:
-#             if t.is_oov:
-#                 print('OOV word: {}'.format(t.text))
-#             else:
-#                 print(t.lemma_)
-#         # text = line.split()
-#         # print(text)
-#         # for word in text:
-#         #     print(word)
-#         break
-#     f.close()
-
-
 class SentimentAnalysisTrain():
     def __init__(self, pos_file, neg_file):
         self.pos_file = pos_file
