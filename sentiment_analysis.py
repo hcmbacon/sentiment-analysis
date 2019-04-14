@@ -3,7 +3,11 @@ import seaborn as sns
 import sklearn
 import spacy
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+import pickle
+from sklearn.metrics import accuracy_score, confusion_matrix
+import os, sys
+
 
 
 class SentimentAnalysisTrain():
@@ -28,7 +32,7 @@ class SentimentAnalysisTrain():
             for n, t in enumerate(tokens):
                 word_embeddings[n] = t.vector
             comment_embeddings[l] = np.mean(word_embeddings, axis=0)
-            break
+            # break
         f.close()
         print(comment_embeddings.shape)
         return comment_embeddings
@@ -45,17 +49,39 @@ class SentimentAnalysisTrain():
         neg_split_ix = int(self.get_no_lines(self.neg_file)*0.8)
         labelled_train = np.concatenate((labelled_pos_data[:pos_split_ix], labelled_neg_data[:neg_split_ix]), axis=0)
         np.random.shuffle(labelled_train)
+        np.savetxt('train_data.csv',labelled_train, delimiter=',')
         labelled_test = np.concatenate((labelled_pos_data[pos_split_ix:], labelled_neg_data[neg_split_ix:]), axis=0)
         np.random.shuffle(labelled_test)
-        Xtrain = labelled_train[:,:300]
-        ytrain = labelled_train[:,-1]
-        Xtest = labelled_test[:,:300]
-        ytest = labelled_test[:,-1]
-        print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
+        np.savetxt('test_data.csv',labelled_test, delimiter=',')
+
+
+    def get_train_test_data(self):
+        train_data = np.loadtxt('train_data.csv', delimiter=",")
+        test_data = np.loadtxt('test_data.csv', delimiter=",")
+        Xtrain = train_data[:,:300]
+        ytrain = train_data[:,-1]
+        Xtest = test_data[:,:300]
+        ytest = test_data[:,-1]
+        # print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
         return Xtrain, ytrain, Xtest, ytest
+
+    def train(self, Xtrain, ytrain):
+        model = MLPClassifier(early_stopping=True)
+        model.fit(Xtrain, ytrain)
+        pickle.dump(model, open('movie_review_classifier.sav', 'wb'))
+
+
+    def evaluate(self):
+        self.get_train_test_data()
+        model = pickle.load(open('movie_review_classifier.sav', 'rb'))
+        y_pred = model.predict(self.Xtest)
+        print(confusion_matrix(self.ytest, y_pred))
 
 
 
 if __name__ == '__main__':
     movie_review = SentimentAnalysisTrain('/Users/hannahbacon/nlp-challenge/positive_reviews.txt', '/Users/hannahbacon/nlp-challenge/negative_reviews.txt')
-    Xtrain, ytrain, Xtest, ytest = movie_review.split_data()
+    # Xtrain, ytrain, Xtest, ytest = movie_review.split_data()
+    Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data()
+    movie_review.train(Xtrain,ytrain)
+    movie_review.evaluate(Xtest, ytest)
