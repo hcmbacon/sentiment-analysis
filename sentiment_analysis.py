@@ -34,7 +34,6 @@ class SentimentAnalysisTrain():
             comment_embeddings[l] = np.mean(word_embeddings, axis=0)
             # break
         f.close()
-        print(comment_embeddings.shape)
         return comment_embeddings
 
     def split_data(self):
@@ -45,8 +44,8 @@ class SentimentAnalysisTrain():
         np.random.shuffle(labelled_pos_data)
         labelled_neg_data = np.concatenate((neg_data, np.zeros((neg_data.shape[0],1))), axis=1)
         np.random.shuffle(labelled_neg_data)
-        pos_split_ix = int(self.get_no_lines(self.pos_file)*0.8)
-        neg_split_ix = int(self.get_no_lines(self.neg_file)*0.8)
+        pos_split_ix = int(pos_data.shape[0]*0.8)
+        neg_split_ix = int(neg_data.shape[0]*0.8)
         train_data = np.concatenate((labelled_pos_data[:pos_split_ix], labelled_neg_data[:neg_split_ix]), axis=0)
         np.random.shuffle(train_data)
         np.savetxt('train_data.csv',train_data, delimiter=',')
@@ -71,7 +70,9 @@ class SentimentAnalysisTrain():
         if os.path.exists('movie_review_classifier.sav'):
             model = pickle.load(open('movie_review_classifier.sav', 'rb'))
             y_pred = model.predict(Xtest)
-            print(confusion_matrix(ytest, y_pred))
+            cm = confusion_matrix(ytest, y_pred)
+            print('Classification accuracy for negative reviews: {}'.format(cm[0,0]/float((np.sum(cm[0])))))
+            print('Classification accuracy for positive reviews: {}'.format(cm[1,1]/float((np.sum(cm[1])))))
         else:
             print('Model does not exist. Specify "train" as argument')
 
