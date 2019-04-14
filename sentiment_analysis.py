@@ -47,17 +47,16 @@ class SentimentAnalysisTrain():
         np.random.shuffle(labelled_neg_data)
         pos_split_ix = int(self.get_no_lines(self.pos_file)*0.8)
         neg_split_ix = int(self.get_no_lines(self.neg_file)*0.8)
-        labelled_train = np.concatenate((labelled_pos_data[:pos_split_ix], labelled_neg_data[:neg_split_ix]), axis=0)
-        np.random.shuffle(labelled_train)
-        np.savetxt('train_data.csv',labelled_train, delimiter=',')
-        labelled_test = np.concatenate((labelled_pos_data[pos_split_ix:], labelled_neg_data[neg_split_ix:]), axis=0)
-        np.random.shuffle(labelled_test)
-        np.savetxt('test_data.csv',labelled_test, delimiter=',')
+        train_data = np.concatenate((labelled_pos_data[:pos_split_ix], labelled_neg_data[:neg_split_ix]), axis=0)
+        np.random.shuffle(train_data)
+        np.savetxt('train_data.csv',train_data, delimiter=',')
+        test_data = np.concatenate((labelled_pos_data[pos_split_ix:], labelled_neg_data[neg_split_ix:]), axis=0)
+        np.random.shuffle(test_data)
+        np.savetxt('test_data.csv',test_data, delimiter=',')
+        return train_data, test_data
 
 
-    def get_train_test_data(self):
-        train_data = np.loadtxt('train_data.csv', delimiter=",")
-        test_data = np.loadtxt('test_data.csv', delimiter=",")
+    def get_train_test_data(self, train_data, test_data):
         Xtrain = train_data[:,:300]
         ytrain = train_data[:,-1]
         Xtest = test_data[:,:300]
@@ -71,17 +70,41 @@ class SentimentAnalysisTrain():
         pickle.dump(model, open('movie_review_classifier.sav', 'wb'))
 
 
-    def evaluate(self):
-        self.get_train_test_data()
+    def evaluate(self, Xtest, ytest):
         model = pickle.load(open('movie_review_classifier.sav', 'rb'))
-        y_pred = model.predict(self.Xtest)
-        print(confusion_matrix(self.ytest, y_pred))
+        y_pred = model.predict(Xtest)
+        print(confusion_matrix(ytest, y_pred))
 
 
 
 if __name__ == '__main__':
-    movie_review = SentimentAnalysisTrain('/Users/hannahbacon/nlp-challenge/positive_reviews.txt', '/Users/hannahbacon/nlp-challenge/negative_reviews.txt')
-    # Xtrain, ytrain, Xtest, ytest = movie_review.split_data()
-    Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data()
-    movie_review.train(Xtrain,ytrain)
-    movie_review.evaluate(Xtest, ytest)
+    mode = sys.argv[1].lower()
+    movie_review = SentimentAnalysisTrain('positive_reviews.txt', 'negative_reviews.txt')
+    if mode == 'train':
+        if os.path.exists('train_data.csv'):
+            print('Loading train data features from csv file')
+            train_data = np.loadtxt('train_data.csv', delimiter=",")
+            test_data = np.loadtxt('test_data.csv', delimiter=",")
+        else:
+            print('Extracting train data features')
+            train_data, test_data = movie_review.split_data()
+        Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data(train_data, test_data)
+        print('Beginning training')
+        movie_review.train(Xtrain,ytrain)
+        print('Finished training model')
+
+
+    elif mode == 'evaluate':
+        if os.path.exists('test_data.csv'):
+            print('Loading test data features from csv file')
+            train_data = np.loadtxt('train_data.csv', delimiter=",")
+            test_data = np.loadtxt('test_data.csv', delimiter=",")
+        else:
+            print('Extracting test data features')
+            train_data, test_data = movie_review.split_data()
+        Xtrain, ytrain, Xtest, ytest = movie_review.get_train_test_data(train_data, test_data)
+        print('Beginning evaluation')
+        movie_review.evaluate(Xtest, ytest)
+    else:
+        print('Please specify "train" or "evaluate" as argument to script')
+
