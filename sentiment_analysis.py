@@ -1,6 +1,5 @@
 
-import pandas as pd
-import seaborn as sns
+
 import spacy
 import numpy as np
 from sklearn.neural_network import MLPClassifier
@@ -12,6 +11,9 @@ import os, sys
 class SentimentAnalysis():
     '''
     Class for training and evaluating neural network for classifying sentiment of movie comments
+    pos_file is the path to the text file for positive movie reviews
+    neg_file is the path to the text file for negative movie reviews
+    model_name is the path where the model is saved
     '''
     def __init__(self, pos_file, neg_file, model_name='movie_review_classifier.sav'):
         self.pos_file = pos_file
@@ -60,7 +62,7 @@ class SentimentAnalysis():
         '''
         Assigns labels to comment embeddings (positive=1, negative=0) and splits the data into train_data and test_data.
         Train_data contains 80% of the positive comment embeddings and 80% of the negative comment embeddings.
-        Test_data contains 20% of the positive comment embeddings and 80% of the negative comment embeddings.
+        Test_data contains 20% of the positive comment embeddings and 20% of the negative comment embeddings.
         Labelled train and test data are shuffled for randomisation in training and are saved in csv files.
         :return: train_data: np.array, shape=[20000,301]
                 test_data: np.array, shape=[5000,301]
@@ -123,6 +125,7 @@ class SentimentAnalysis():
         :param ytest: np.array, shape=[n, 1]
         :return: None
         '''
+        print('Evaluating {}'.format(self.model_name))
         if os.path.exists(self.model_name):
             model = pickle.load(open(self.model_name, 'rb'))
             y_pred = model.predict(Xtest)
