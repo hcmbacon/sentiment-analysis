@@ -32,8 +32,8 @@ class SentimentAnalysis():
 
     def get_comment_embeddings(self, text_file):
         '''
-        Get comment feature representations for all comments in text_file. For each comment, extracts word embeddings for words in comment
-        and averages the word vectors for overall comment representation.
+        Get comment representations for all comments in text_file. For each comment, extracts word embeddings for words in comment
+        and averages the word vectors for overall comment embedding.
         :param text_file: path as string
         :return: comment_embeddings: np.array, shape=[no of comments,300]
         '''
@@ -58,9 +58,9 @@ class SentimentAnalysis():
 
     def split_data(self):
         '''
-        Assigns labels to movie reviews (positive=1, negative=0) and splits the data into train_data and test_data.
-        Train_data contains 80% of the positive comment representations and 80% of the negative comment representations.
-        Test_data contains 20% of the positive comment representations and 80% of the negative comment representations.
+        Assigns labels to comment embeddings (positive=1, negative=0) and splits the data into train_data and test_data.
+        Train_data contains 80% of the positive comment embeddings and 80% of the negative comment embeddings.
+        Test_data contains 20% of the positive comment embeddings and 80% of the negative comment embeddings.
         Labelled train and test data are shuffled for randomisation in training and are saved in csv files.
         :return: train_data: np.array, shape=[20000,301]
                 test_data: np.array, shape=[5000,301]
@@ -96,7 +96,7 @@ class SentimentAnalysis():
 
     def get_data_labels(self, data):
         '''
-        Extracts comment representations and corresponding labels for training.
+        Extracts comment embeddings and corresponding labels for training.
         :param data: np.array, shape=[n, 301]
         :return: Xval: np.array, shape=[n,300]
                 yval: np.array, shape=[n, 1]
@@ -107,7 +107,7 @@ class SentimentAnalysis():
 
     def train(self, Xtrain, ytrain):
         '''
-        Trains neural network on n-sized Xtrain comment representations with ytrain labels for sentiment analysis of comments. Saves model.
+        Trains neural network on n-sized Xtrain comment embeddings with ytrain labels for sentiment analysis of comments. Saves model.
         :param Xtrain: np.array, shape=[n, 300]
         :param ytrain: np.array, shape=[n, 1]
         :return: None
