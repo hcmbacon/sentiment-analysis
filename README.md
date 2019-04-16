@@ -45,7 +45,7 @@ The positive (class 1) and negative (class 0) reviews contained 25000 reviews ea
 
 ### Training
 
-A feedforward neural network was trained, using the sci-kit learn toolkit.The input layer has 300 dimensions and there is 1 hidden layers with unit-size 100. RELU activation function was used and the learning rate was 0.001.
+A feedforward neural network was trained, using the sci-kit learn toolkit.The input layer has 300 dimensions and there is 1 hidden layer with unit-size 100. RELU activation function was used and the learning rate was 0.001. The output layer is a probability distribution over the 2 classes.
 
 The model is saved as movie_review_classifier.sav.
 
