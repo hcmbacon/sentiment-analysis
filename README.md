@@ -36,18 +36,16 @@ Each line in the data text files contains a tokenised string of words in a revie
 
 ### Splitting data
 
-The positive (class 1) and negative (class 0) reviews contained 12500 reviews each, for a total of 25000 reviews. \
- The data from each class was randomly shuffled then the first 80% of the positive reviews were combined with the first 80% of the negative reviews, for a total of 20000 examples for the training set.
- The remaining 20% of data from each class was selected for the test set (5000 examples).\
+The positive (class 1) and negative (class 0) reviews contained 25000 reviews each, for a total of 50000 reviews. \
+ The data from each class was randomly shuffled then the first 80% of the positive reviews were combined with the first 80% of the negative reviews, for a total of 40000 examples for the training set.
+ The remaining 20% of data from each class was selected for the test set (10000 examples).\
  This split provides a large amount of data for the training for improving generalisation, and the balanced classes provide examples in an even distribution for predicting each class.
  The test set size is also reasonable to give a reliable evaluation for each class.
  Each train and test set were shuffled again to ensure random order of training examples with respect to class.
 
 ### Training
 
-A feedforward neural network was trained, using the sci-kit learn toolkit.
-
-The input layer has 300 dimensions. There are 2 hidden layers with 100 dimensions each. RELU activatin function was used and the learning rate was 0.001.
+A feedforward neural network was trained, using the sci-kit learn toolkit.The input layer has 300 dimensions and there is 1 hidden layers with unit-size 100. RELU activation function was used and the learning rate was 0.001.
 
 The model is saved as movie_review_classifier.sav.
 

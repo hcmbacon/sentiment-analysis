@@ -8,17 +8,19 @@ from sklearn.metrics import confusion_matrix
 import os, sys
 
 
-class SentimentAnalysis():
+class DataProc():
     '''
-    Class for training and evaluating neural network for classifying sentiment of movie comments
-    pos_file is the path to the text file for positive movie reviews
-    neg_file is the path to the text file for negative movie reviews
-    model_name is the path where the model is saved
+    Class for handling data processing, by extracting features and splitting into training and test data.
+
     '''
-    def __init__(self, pos_file, neg_file, model_name='movie_review_classifier.sav'):
+    def __init__(self, pos_file, neg_file):
+        '''
+
+        :param pos_file: path to the text file for positive movie reviews
+        :param neg_file: path to the text file for negative movie reviews
+        '''
         self.pos_file = pos_file
         self.neg_file = neg_file
-        self.model_name = model_name
         self.spacy_model = spacy.load('en_core_web_md')
 
     def get_no_lines(self, text_file):
@@ -64,8 +66,8 @@ class SentimentAnalysis():
         Train_data contains 80% of the positive comment embeddings and 80% of the negative comment embeddings.
         Test_data contains 20% of the positive comment embeddings and 20% of the negative comment embeddings.
         Labelled train and test data are shuffled for randomisation in training and are saved in csv files.
-        :return: train_data: np.array, shape=[20000,301]
-                test_data: np.array, shape=[5000,301]
+        :return: train_data: np.array, shape=[40000,301]
+                test_data: np.array, shape=[10000,301]
         '''
         print('Getting comment embeddings for positive movie reviews')
         pos_data = self.get_comment_embeddings(self.pos_file)
@@ -96,6 +98,33 @@ class SentimentAnalysis():
 
         return train_data, test_data
 
+
+class SentimentAnalysis():
+    '''
+        Class for training and evaluating neural network for classifying sentiment of movie comments
+
+    '''
+
+    def __init__(self, train_data, test_data,\
+                 model_name='movie_review_classifier.sav', hidden_layer_sizes=(100,), activation='relu', learning_rate='constant',learning_rate_init=0.001):
+        '''
+
+        :param train_data: np.array storing labelled trainingdata
+        :param test_data: np.array storing labelled test data
+        :param model_name: path where the model is saved (str)
+        :param hidden_layer_sizes: size and number of hidden layers (tuple)
+        :param activation: non-linear activation function type
+        :param learning_rate: type of learning rate (default=constant)
+        :param learning_rate_init: initial learning rate (float)
+        '''
+        self.train_data = train_data
+        self.test_data = test_data
+        self.model_name = model_name
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.activation = activation
+        self.learning_rate=learning_rate
+        self.learning_rate_init=learning_rate_init
+
     def get_data_labels(self, data):
         '''
         Extracts comment embeddings and corresponding labels for training.
@@ -107,18 +136,20 @@ class SentimentAnalysis():
         yval = data[:,-1]
         return Xval, yval
 
-    def train(self, Xtrain, ytrain):
+    def train(self):
         '''
         Trains neural network on n-sized Xtrain comment embeddings with ytrain labels for sentiment analysis of comments. Saves model.
         :param Xtrain: np.array, shape=[n, 300]
         :param ytrain: np.array, shape=[n, 1]
         :return: None
         '''
-        model = MLPClassifier(early_stopping=True)
+        Xtrain, ytrain = self.get_data_labels(self.train_data)
+        model = MLPClassifier(hidden_layer_sizes=self.hidden_layer_sizes, activation=self.activation, learning_rate=self.learning_rate,\
+                              learning_rate_init=self.learning_rate_init, early_stopping=True)
         model.fit(Xtrain, ytrain)
         pickle.dump(model, open(self.model_name, 'wb'))
 
-    def evaluate(self, Xtest, ytest):
+    def evaluate(self):
         '''
         Evaluates saved neural network on n-sized test set. Prints classification accuracy for each class to console.
         :param Xtest: np.array, shape=[n, 300]
@@ -128,6 +159,7 @@ class SentimentAnalysis():
         print('Evaluating {}'.format(self.model_name))
         if os.path.exists(self.model_name):
             model = pickle.load(open(self.model_name, 'rb'))
+            Xtest, ytest = self.get_data_labels(self.test_data)
             y_pred = model.predict(Xtest)
             cm = confusion_matrix(ytest, y_pred)
             print('Classification accuracy for negative reviews: {}'.format(cm[0,0]/float((np.sum(cm[0])))))
@@ -138,30 +170,25 @@ class SentimentAnalysis():
 
 if __name__ == '__main__':
     mode = sys.argv[1].lower()
-    movie_review = SentimentAnalysis('positive_reviews.txt', 'negative_reviews.txt')
 
+    movie_review_data = DataProc('positive_reviews.txt', 'negative_reviews.txt')
+    if os.path.exists('train_data.csv'):
+        print('Loading train and test data features from csv files')
+        train_data = np.loadtxt('train_data.csv', delimiter=",")
+        test_data = np.loadtxt('test_data.csv', delimiter=",")
+    else:
+        print('Extracting train and test data features')
+        train_data, test_data = movie_review_data.split_data()
+
+    movie_review_classifier = SentimentAnalysis(train_data, test_data)
     if mode == 'train':
-        if os.path.exists('train_data.csv'):
-            print('Loading train data features from csv file')
-            train_data = np.loadtxt('train_data.csv', delimiter=",")
-        else:
-            print('Extracting train data features')
-            train_data, test_data = movie_review.split_data()
-        Xtrain, ytrain = movie_review.get_data_labels(train_data)
         print('Beginning training')
-        movie_review.train(Xtrain,ytrain)
+        movie_review_classifier.train()
         print('Finished training model')
 
     elif mode == 'evaluate':
-        if os.path.exists('test_data.csv'):
-            print('Loading test data features from csv file')
-            test_data = np.loadtxt('test_data.csv', delimiter=",")
-        else:
-            print('Extracting test data features')
-            train_data, test_data = movie_review.split_data()
-        Xtest, ytest = movie_review.get_data_labels(test_data)
         print('Beginning evaluation')
-        movie_review.evaluate(Xtest, ytest)
+        movie_review_classifier.evaluate()
     else:
         print('Please specify "train" or "evaluate" as argument to script')
 
